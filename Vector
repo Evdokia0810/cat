@@ -1,1 +1,86 @@
-
+#include <iostream>
+using namespace std;
+class vector {
+	int *arr;
+	int n;
+public:
+	vector() 
+	{
+		arr = new int[0];
+		n = 0;
+	}
+	vector(int kkk, int el = NULL) 
+	{
+		arr = new int[kkk]{ el };
+		n = kkk;
+	}
+	void append(int a) {
+		int *temp = new int[n + 1];
+		for (int i = 0; i < n; i++)
+			temp[i] = arr[i];
+		temp[n] = a;
+		delete[] arr;
+		arr = temp;
+		n++;
+	}
+	void resize(int kkk, int el = NULL) 
+	{
+		int *temp = new int[kkk]{ el };
+		delete[] arr;
+		arr = temp;
+		n = kkk;
+	}
+	void del(int i) 
+	{
+		int *temp = new int[n - 1];
+		for (int k = 0; k < i; k++) 
+		{
+			temp[k] = arr[k];
+		}
+		for (int k = i + 1; k < n - 1; k++) 
+		{
+			temp[k - 1] = arr[k];
+		}
+		arr = temp;
+	}
+	int find(int a, int st = 0) 
+	{
+		for (int i = st; i < n; i++) 
+		{
+			if (arr[i] == a)
+				return i;
+		}
+		return -1;
+	}
+	int &operator[](int i) 
+	{
+		return arr[i];
+	}
+	int size() 
+	{
+		return n;
+	}
+	~vector() 
+	{
+		delete[] arr;
+		n = NULL;
+	}
+};
+int main() 
+{
+	vector A(10);
+	for (int i = 0; i < A.size(); i++) 
+	{
+		cout << A[i] << " ";
+	}
+	cout << endl;
+	A[2] = 1;
+	A.resize(4, 1);
+	A.append(17);
+	for (int i = 0; i < A.size(); i++) 
+	{
+		cout << A[i] << " ";
+	}
+	system("pause");
+	return 0;
+}
