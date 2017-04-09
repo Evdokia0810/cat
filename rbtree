@@ -1,0 +1,305 @@
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
+using namespace std;
+           
+#define compLT(a,b) (a < b)
+#define compEQ(a,b) (a == b)
+
+
+typedef struct Node_ {
+	struct Node_ *left;         //left child 
+	struct Node_ *right;        // right child 
+	struct Node_ *parent;       // parent 
+	bool color;            // node color (0, 1) 
+	int data;                     // data stored in node 
+} Node;
+
+#define NIL &sentinel           // all leafs are sentinels 
+Node sentinel = { NIL, NIL, 0, 0, 0 };
+
+class rb_tree {
+
+	Node *root = NIL;
+
+
+	void rotateLeft(Node *x) {
+
+		Node *y = x->right;
+
+		x->right = y->left;
+		if (y->left != NIL) y->left->parent = x;
+
+		if (y != NIL) y->parent = x->parent;
+		if (x->parent) {
+			if (x == x->parent->left)
+				x->parent->left = y;
+			else
+				x->parent->right = y;
+		}
+		else {
+			root = y;
+		}
+
+		y->left = x;
+		if (x != NIL) x->parent = y;
+	}
+
+	void rotateRight(Node *x) {
+
+		Node *y = x->left;
+
+		x->left = y->right;
+		if (y->right != NIL) y->right->parent = x;
+
+		if (y != NIL) y->parent = x->parent;
+		if (x->parent) {
+			if (x == x->parent->right)
+				x->parent->right = y;
+			else
+				x->parent->left = y;
+		}
+		else {
+			root = y;
+		}
+
+		y->right = x;
+		if (x != NIL) x->parent = y;
+	}
+
+	void insertFixup(Node *x) {
+
+		while (x != root && x->parent->color == 1) {
+			if (x->parent == x->parent->parent->left) {
+				Node *y = x->parent->parent->right;
+				if (y->color == 1) {
+					x->parent->color = 0;
+					y->color = 0;
+					x->parent->parent->color = 1;
+					x = x->parent->parent;
+				}
+				else {
+					if (x == x->parent->right) {
+						x = x->parent;
+						rotateLeft(x);
+					}
+					x->parent->color = 0;
+					x->parent->parent->color = 1;
+					rotateRight(x->parent->parent);
+				}
+			}
+			else {
+				Node *y = x->parent->parent->left;
+				if (y->color == 1) {
+					x->parent->color = 0;
+					y->color = 0;
+					x->parent->parent->color = 1;
+					x = x->parent->parent;
+				}
+				else {
+					if (x == x->parent->left) {
+						x = x->parent;
+						rotateRight(x);
+					}
+					x->parent->color = 0;
+					x->parent->parent->color = 1;
+					rotateLeft(x->parent->parent);
+				}
+			}
+		}
+		root->color = 0;
+	}
+
+	void deleteFixup(Node *x) {
+
+		while (x != root && x->color == 0) {
+			if (x == x->parent->left) {
+				Node *w = x->parent->right;
+				if (w->color == 1) {
+					w->color = 0;
+					x->parent->color = 1;
+					rotateLeft(x->parent);
+					w = x->parent->right;
+				}
+				if (w->left->color == 0 && w->right->color == 0) {
+					w->color = 1;
+					x = x->parent;
+				}
+				else {
+					if (w->right->color == 0) {
+						w->left->color = 0;
+						w->color = 1;
+						rotateRight(w);
+						w = x->parent->right;
+					}
+					w->color = x->parent->color;
+					x->parent->color = 0;
+					w->right->color = 0;
+					rotateLeft(x->parent);
+					x = root;
+				}
+			}
+			else {
+				Node *w = x->parent->left;
+				if (w->color == 1) {
+					w->color = 0;
+					x->parent->color = 1;
+					rotateRight(x->parent);
+					w = x->parent->left;
+				}
+				if (w->right->color == 0 && w->left->color == 0) {
+					w->color = 1;
+					x = x->parent;
+				}
+				else {
+					if (w->left->color == 0) {
+						w->right->color = 0;
+						w->color = 1;
+						rotateLeft(w);
+						w = x->parent->left;
+					}
+					w->color = x->parent->color;
+					x->parent->color = 0;
+					w->left->color = 0;
+					rotateRight(x->parent);
+					x = root;
+				}
+			}
+		}
+		x->color = 0;
+	}
+
+public:
+
+	rb_tree(int x) {
+		root = new Node{ NIL, NIL, 0, 0, x };
+	}
+
+	Node *insertNode(int data) {
+		Node *current, *parent;
+
+		current = root;
+		parent = 0;
+		while (current != NIL) {
+			if (compEQ(data, current->data)) return (current);
+			parent = current;
+			current = compLT(data, current->data) ?
+				current->left : current->right;
+		}
+		Node*  x = new Node;
+		x->data = data;
+		x->parent = parent;
+		x->left = NIL;
+		x->right = NIL;
+		x->color = 1;
+
+		if (parent) {
+			if (compLT(data, parent->data))
+				parent->left = x;
+			else
+				parent->right = x;
+		}
+		else {
+			root = x;
+		}
+
+		insertFixup(x);
+		return(x);
+	}
+
+	void deleteNode(Node *z) {
+		Node *x, *y;
+
+		if (!z || z == NIL) return;
+
+
+		if (z->left == NIL || z->right == NIL) {
+			y = z;
+		}
+		else {
+			y = z->right;
+			while (y->left != NIL) y = y->left;
+		}
+
+		if (y->left != NIL)
+			x = y->left;
+		else
+			x = y->right;
+
+		x->parent = y->parent;
+		if (y->parent)
+			if (y == y->parent->left)
+				y->parent->left = x;
+			else
+				y->parent->right = x;
+		else
+			root = x;
+
+		if (y != z) z->data = y->data;
+
+
+		if (y->color == 0)
+			deleteFixup(x);
+
+		free(y);
+	}
+
+	Node *findNode(int data) {
+
+		Node *current = root;
+		while (current != NIL)
+			if (compEQ(data, current->data))
+				return (current);
+			else
+				current = compLT(data, current->data) ? current->left : current->right;
+		return(0);
+	}
+
+	Node getRoot() {
+		return *root;
+	}
+
+	void print(Node *tree) {
+		if (tree != NIL) {
+			print(tree->left);
+			cout << tree->data << endl;
+			print(tree->right);
+		}
+	}
+
+	void clear(Node *tree) {
+		if (tree != NIL) {
+			print(tree->left);
+			tree = NULL;
+			print(tree->right);
+		}
+	}
+
+	~rb_tree() {
+		this->clear(root);
+	}
+
+};
+
+
+void main() {
+	int a, n;
+	cin >> n;
+	cout << "data to insert \n";
+	cin >> a;
+	rb_tree A(a);
+	for (int i = 0; i < n - 1; ++i) {
+		cin >> a;
+		A.insertNode(a);
+	}
+	cout << "data to delete \n";
+	cin >> a;
+	A.deleteNode(A.findNode(a));
+	A.print(&A.getRoot());
+
+	system("pause");
+	return 0;
+}
